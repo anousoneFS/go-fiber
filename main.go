@@ -20,9 +20,9 @@ import (
 const(
 	host = "localhost"
 	port = 5432
-	username = "anousone"
-	password = "smpidpmr"
-	dbname = "test"
+	username = ""
+	password = ""
+	dbname = ""
 )
 var db *sqlx.DB
 const jwtSecret = "infinitus"
