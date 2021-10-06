@@ -1,6 +1,7 @@
 package main
 
 // this is gofiber basic
+// alway learning
 
 import (
 	"fmt"
@@ -17,19 +18,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const(
-	host = "localhost"
-	port = 5432
+const (
+	host     = "localhost"
+	port     = 5432
 	username = ""
 	password = ""
-	dbname = ""
+	dbname   = ""
 )
+
 var db *sqlx.DB
+
 const jwtSecret = "infinitus"
 
-func main(){
+func main() {
 	psqlconn := fmt.Sprintf(
-		"host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", host, port, username, password, dbname) 
+		"host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", host, port, username, password, dbname)
 	var err error
 	db, err = sqlx.Open("postgres", psqlconn)
 	if err != nil {
@@ -40,7 +43,7 @@ func main(){
 	app := fiber.New()
 	app.Use("/hello", jwtware.New(jwtware.Config{
 		SigningMethod: "HS256",
-		SigningKey: []byte(jwtSecret),
+		SigningKey:    []byte(jwtSecret),
 		SuccessHandler: func(c *fiber.Ctx) error {
 			return c.Next()
 		},
@@ -72,14 +75,14 @@ func Signup(c *fiber.Ctx) error {
 	fmt.Println("3")
 	query := "INSERT INTO user_signup (username, password) VALUES ($1, $2) RETURNING id"
 	lastinsertid := 0
-	err = db.QueryRow(query,request.Username,string(password)).Scan(&lastinsertid)
+	err = db.QueryRow(query, request.Username, string(password)).Scan(&lastinsertid)
 	if err != nil {
 		fmt.Printf("error = %v", err)
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	user := User{
-		Id: int(lastinsertid),
+		Id:       int(lastinsertid),
 		Username: request.Username,
 		Password: string(password),
 	}
@@ -110,7 +113,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	claims := jwt.StandardClaims{
-		Issuer: strconv.Itoa(user.Id),
+		Issuer:    strconv.Itoa(user.Id),
 		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 	}
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -128,7 +131,7 @@ func Hello(c *fiber.Ctx) error {
 }
 
 type User struct {
-	Id int `db:"id" json:"id"`
+	Id       int    `db:"id" json:"id"`
 	Username string `db:"username" json:"username"`
 	Password string `db:"password" json:"password"`
 }
@@ -143,19 +146,19 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func Fiber(){
-	app := fiber.New(fiber.Config {
-		Prefork: false,  // set to false for run one port
+func Fiber() {
+	app := fiber.New(fiber.Config{
+		Prefork:       false, // set to false for run one port
 		CaseSensitive: false, // if set true home != Home
 		StrictRouting: false, // if set true /home != /home/
 	})
 
 	app.Use(requestid.New()) // X-Request-Id: a9b45ddb-ecc0-4b9b-b26b-bd74d006467a
 
-	app.Use(cors.New( cors.Config {
-			AllowOrigins: "*",
-			AllowMethods: "GET,POST",
-			AllowHeaders: "*",
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST",
+		AllowHeaders: "*",
 	}))
 
 	// MIddleware
@@ -173,28 +176,28 @@ func Fiber(){
 	// GET
 	app.Get("/hello", func(c *fiber.Ctx) error {
 		fmt.Println("hello")
-		return c.SendString("GET: Hello World")	
+		return c.SendString("GET: Hello World")
 	})
 
 	// POST
-	app.Post("/hello", func(c *fiber.Ctx) error{
-		return c.SendString("POST: Hello World")	
+	app.Post("/hello", func(c *fiber.Ctx) error {
+		return c.SendString("POST: Hello World")
 	})
 
 	// Parameters Optional
-	app.Get("/hello/:name/:surname", func(c *fiber.Ctx) error{
+	app.Get("/hello/:name/:surname", func(c *fiber.Ctx) error {
 		name := c.Params("name")
 		surname := c.Params("surname")
-		return c.SendString("name: " + name + " " + surname)	
+		return c.SendString("name: " + name + " " + surname)
 	})
 
 	// Parameters Int
-	app.Get("/hello/:id", func(c *fiber.Ctx) error{
+	app.Get("/hello/:id", func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
 			return fiber.ErrBadRequest
 		}
-		return c.SendString(fmt.Sprintf("ID: %v", id))	
+		return c.SendString(fmt.Sprintf("ID: %v", id))
 	})
 
 	// Query
@@ -242,7 +245,6 @@ func Fiber(){
 		return c.SendString("hello v2")
 	})
 
-
 	// Mount
 	userApp := fiber.New() // create new instance
 	userApp.Get("/login", func(c *fiber.Ctx) error {
@@ -260,17 +262,17 @@ func Fiber(){
 	// Enviroments
 	app.Get("/env", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"BaseURL": c.BaseURL(),
-			"Hostname": c.Hostname(),
-			"IP": c.IP(),
-			"IPs": c.IPs(),
+			"BaseURL":     c.BaseURL(),
+			"Hostname":    c.Hostname(),
+			"IP":          c.IP(),
+			"IPs":         c.IPs(),
 			"OriginalURL": c.OriginalURL(),
-			"Path": c.Path(),
-			"Protocol": c.Protocol(),
-			"Subdomains": c.Subdomains(),
+			"Path":        c.Path(),
+			"Protocol":    c.Protocol(),
+			"Subdomains":  c.Subdomains(),
 		})
 	})
-	
+
 	// Body
 	app.Post("/body", func(c *fiber.Ctx) error {
 		fmt.Printf("is json: %v\n", c.Is("json")) // check if body is json
@@ -288,6 +290,6 @@ func Fiber(){
 }
 
 type Person struct {
-	Id int `json:"id"`
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
